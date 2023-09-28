@@ -1,0 +1,13 @@
+services:
+  aibox:
+    image: aibox-dlstreamer:3.0
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ${HOME}/.Xauthority:/home/dlstreamer/.Xauthority:ro
+    devices:
+      - /dev/dri
+    group_add:
+      - render
+    restart: always
