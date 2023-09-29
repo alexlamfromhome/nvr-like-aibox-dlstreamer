@@ -19,4 +19,4 @@ docker run -ti --rm \
        -v $(pwd)/output:/home/aibox/output \
        --device /dev/dri \
        --group-add ${DEVICE_GRP} \
-       ${CONTAINER}
+       ${CONTAINER} $* 
