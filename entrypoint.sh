@@ -1,5 +1,9 @@
 #!/bin/bash
 
+NUM_PANES=${1:-9}
+AI_CHANNELS=${2:-9}
+VIDEO_IN=${3:-cars-on-highway.1920x1080.mp4}
+
 source /opt/intel/dlstreamer/setupvars.sh 
 source /opt/intel/openvino_2022/setupvars.sh
 
@@ -8,7 +12,7 @@ SSDLITE_LABEL="labels=/home/aibox/models/public/ssdlite_mobilenet_v2/coco_91cl_b
 
 RES_WIDTH=1920
 RES_HEIGHT=1080
-NUM_PANES=9
+#NUM_PANES=9
 PANE_WIDTH=0
 PANE_HEIGHT=0
 
@@ -109,15 +113,15 @@ pipeline+=" fpsdisplaysink video-sink=xvimagesink sync=false "
 function add_channel() {
     channel_number=${1}
     num_ai_channels=${2:-0}
-    channel="filesrc location=videos/cars-on-highway.1920x1080.mp4 ! "
+    channel="filesrc location=videos/${VIDEO_IN} ! "
     channel+="tee name=t_${channel_number} ! "
     channel+="queue ! qtdemux ! "
     channel+="splitmuxsink async-finalize=true location=output/ch${channel_number}_%02d.mp4 max-size-time=10000000000 "
     channel+="t_${channel_number}. ! queue ! decodebin ! video/x-raw(memory:VASurface) ! "
-    if [[ ${channel_number} -le ${num_ai_channels} ]]; then
+    if [[ ${channel_number} -lt ${num_ai_channels} ]]; then
 	channel+="gvadetect model=${SSDLITE} ${SSDLITE_LABEL} "
 	#channel+="model-instance-id=od1 " Causing hang with multiple gvadetect
-	#channel+="ie-config=CACHE_DIR=/tmp/cl_cache " No cl_cache output?!
+	channel+="ie-config=CACHE_DIR=/tmp/cl_cache " #No cl_cache output?!
 	channel+="nireq=2 batch-size=4 "
 	channel+="pre-process-backend=vaapi-surface-sharing device=GPU ! "
 	channel+="gvawatermark ! "
@@ -127,9 +131,8 @@ function add_channel() {
 }
 
 
-
 for i in `seq 0 $((${NUM_PANES}-1))`; do
-    pipeline+="$(add_channel ${i} 9 ) ! "
+    pipeline+="$(add_channel ${i} ${AI_CHANNELS} ) ! "
     pipeline+="queue ! "
     pipeline+="comp0.sink_${i} "
 done
