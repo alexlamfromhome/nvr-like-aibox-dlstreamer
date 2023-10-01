@@ -12,7 +12,6 @@ SSDLITE_LABEL="labels=/home/aibox/models/public/ssdlite_mobilenet_v2/coco_91cl_b
 
 RES_WIDTH=1920
 RES_HEIGHT=1080
-#NUM_PANES=9
 PANE_WIDTH=0
 PANE_HEIGHT=0
 
@@ -98,16 +97,10 @@ function compositor(){
 esac
 }
 
-#pipeline="vaapioverlay name=comp0 \
-#         sink_0::xpos=0                    sink_0::ypos=0                 sink_0::alpha=1 \
-#         sink_1::xpos=$((${PANE_WIDTH}*1)) sink_1::ypos=0                 sink_1::alpha=1 \
-#         sink_2::xpos=0                    sink_2::ypos=$((${PANE_HEIGHT}*1)) sink_2::alpha=1 \
-#         sink_3::xpos=$((${PANE_WIDTH}*1)) sink_3::ypos=$((${PANE_HEIGHT}*1)) sink_3::alpha=1 ! "
-
 pipeline="$(compositor) ! "
 pipeline+=" gvafpscounter ! "
-pipeline+=" fpsdisplaysink video-sink=xvimagesink sync=false "
-#pipeline+="vaapih264enc ! h264parse ! splitmuxsink async-finalize=true location=output/compose_%02d.mp4 "
+#pipeline+=" fpsdisplaysink video-sink=xvimagesink sync=false "
+pipeline+="vaapih264enc ! h264parse ! splitmuxsink async-finalize=true location=output/compose_%02d.mp4 "
 
 
 function add_channel() {
