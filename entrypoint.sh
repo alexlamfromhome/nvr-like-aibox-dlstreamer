@@ -2,7 +2,7 @@
 
 NUM_PANES=${1:-9}
 AI_CHANNELS=${2:-9}
-VIDEO_IN=${3:-cars-on-highway.1920x1080.mp4}
+VIDEO_IN=${3:-videos/cars-on-highway.1920x1080.mp4}
 
 source /opt/intel/dlstreamer/setupvars.sh 
 source /opt/intel/openvino_2022/setupvars.sh
@@ -113,18 +113,21 @@ pipeline+=" fpsdisplaysink video-sink=xvimagesink sync=false "
 function add_channel() {
     channel_number=${1}
     num_ai_channels=${2:-0}
-    channel="filesrc location=videos/${VIDEO_IN} ! "
+    channel="filesrc location=${VIDEO_IN} ! "
+    channel+="decodebin ! video/x-raw(memory:VASurface) ! "
+
     channel+="tee name=t_${channel_number} ! "
-    channel+="queue ! qtdemux ! "
+    channel+="queue name=queue_record_${channel_number} ! vaapih264enc ! h264parse ! "
     channel+="splitmuxsink async-finalize=true location=output/ch${channel_number}_%02d.mp4 max-size-time=10000000000 "
-    channel+="t_${channel_number}. ! queue ! decodebin ! video/x-raw(memory:VASurface) ! "
+
+    channel+="t_${channel_number}. ! queue name=queue_detect_${channel_number} ! "
     if [[ ${channel_number} -lt ${num_ai_channels} ]]; then
-	channel+="gvadetect model=${SSDLITE} ${SSDLITE_LABEL} "
-	#channel+="model-instance-id=od1 " Causing hang with multiple gvadetect
-	channel+="ie-config=CACHE_DIR=/tmp/cl_cache " #No cl_cache output?!
-	channel+="nireq=2 batch-size=4 "
-	channel+="pre-process-backend=vaapi-surface-sharing device=GPU ! "
-	channel+="gvawatermark ! "
+        channel+="gvadetect model=${SSDLITE} ${SSDLITE_LABEL} "
+        #channel+="model-instance-id=od1 " Causing hang with multiple gvadetect
+        channel+="ie-config=CACHE_DIR=/tmp/cl_cache " #No cl_cache output?!
+        channel+="nireq=2 batch-size=4 "
+        channel+="pre-process-backend=vaapi-surface-sharing device=GPU ! "
+        channel+="gvawatermark ! "
     fi
     channel+="vaapipostproc ! video/x-raw,width=${PANE_WIDTH},height=${PANE_HEIGHT} "
     echo ${channel}
