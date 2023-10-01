@@ -99,8 +99,8 @@ esac
 
 pipeline="$(compositor) ! "
 pipeline+=" gvafpscounter ! "
-#pipeline+=" fpsdisplaysink video-sink=xvimagesink sync=false "
-pipeline+="vaapih264enc ! h264parse ! splitmuxsink async-finalize=true location=output/compose_%02d.mp4 "
+pipeline+=" fpsdisplaysink video-sink=xvimagesink sync=false "
+#pipeline+="vaapih264enc ! h264parse ! splitmuxsink async-finalize=true location=output/compose_%02d.mp4 "
 
 
 function add_channel() {
